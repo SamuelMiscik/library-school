@@ -1,0 +1,73 @@
+@startuml
+!pragma layout smetana
+hide methods
+hide empty members
+skinparam classAttributeIconSize 0
+
+title Library - conceptual model
+
+class Address <<dataType>> {
+  street
+  city
+  zip
+  country
+}
+
+enum Genre {
+  NOVEL
+  POETRY
+  SCIENCE
+  CHILDREN
+  ...
+}
+
+class Library {
+  name
+  address : Address
+}
+
+class Publisher {
+  name
+  address : Address
+}
+
+class Book {
+  isbn {id}
+  title
+  publicationDate
+  genre : Genre
+}
+
+class Author {
+  firstName
+  lastName
+  email
+}
+
+class Ownership {
+  copies {1..5}
+}
+
+Publisher "1" -- "0..*" Book : publishes >
+Author "1..*" -- "0..*" Book : writes >
+Author "0..*" -- "0..*" Publisher : has contract with >
+Library "0..*" -- "0..*" Book : owns >
+(Library, Book) .. Ownership
+
+note right of Ownership
+  <b>Ownership = one book title in one library</b>
+  (attributes of the owns relationship, like "provides")
+
+  • Book is the <b>type</b> (one ISBN), not a physical copy,
+    so 5 copies are still <b>1</b> Ownership → not a multiplicity 1..5
+  • <b>How many</b> is stored inside the class: copies {1..5}
+  • Each library + book pair only once {unique}
+end note
+
+note bottom of Book
+  When a new book is inserted:
+  - its ISBN must not already exist in the system
+  - every listed author must have a contract
+    with the listed publisher
+end note
+@enduml

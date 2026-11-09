@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Relační model – Knihovny</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            max-width: 900px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 16px;
+        }
+
+        ul ul {
+            list-style-type: none;
+            padding-left: 32px;
+            margin-top: 4px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .pk {
+            display: inline-block;
+            border-bottom: 2px solid black;
+            padding-bottom: 1px;
+        }
+    </style>
+</head>
+<body>
+<h1>Relační model – Knihovny</h1>
+
+<ul>
+
+    <li>Library(<span class="pk">library id</span>, name, country, city, street, ZIP)</li>
+
+    <!-- PUBLISHER -->
+    <!-- publisher id = umelý kľúč -->
+    <li>Publisher(<span class="pk">publisher id</span>, name, country, city, street, ZIP)</li>
+
+    <!-- BOOK -->
+    <!-- ISBN = prirodzený kľúč -->
+    <!-- publisher id je kvoli vazbe Publisher(1) -> publishes -> Book(0..*) -->
+    <!-- genre = enum Genre ako jeden stĺpec -->
+    <li>Book(<span class="pk">ISBN</span>, title, publication date, genre, publisher id)
+        <ul>
+            <li>FK: (publisher id) ⊆ Publisher(publisher id)</li>
+        </ul>
+    </li>
+
+    <!-- M:N vazba medzi Library a Book s atributom copies (ako Provides) -->
+    <!-- copies 1..5 = max 5 rovnakých kníh v knižnici -->
+    <!-- ownership id = umelý kľúč, dvojica (library id, book id) je unikátna -->
+    <!-- book id obsahuje ISBN knihy -->
+    <li>Ownership(<span class="pk">ownership id</span>, library id, book id, copies)
+        <ul>
+            <li>FK: (library id) ⊆ Library(library id)</li>
+            <li>FK: (book id) ⊆ Book(ISBN)</li>
+            <li>UNIQUE: (library id, book id)</li>
+            <li>CHECK: 1 ≤ copies ≤ 5</li>
+        </ul>
+    </li>
+
+
+
+    <!-- AUTHOR -->
+    <!-- author id = umelý kľúč -->
+    <li>Author(<span class="pk">author id</span>, first name, last name, email)</li>
+
+
+
+    <!-- M:N vazba medzi Author a Book -->
+    <li>Writes(<span class="pk">ISBN, author id</span>)
+        <ul>
+            <li>FK: (ISBN) ⊆ Book(ISBN)</li>
+            <li>FK: (author id) ⊆ Author(author id)</li>
+        </ul>
+    </li>
+
+    <!-- M:N vazba medzi Author a Publisher -->
+    <li>Contract(<span class="pk">author id, publisher id</span>)
+        <ul>
+            <li>FK: (author id) ⊆ Author(author id)</li>
+            <li>FK: (publisher id) ⊆ Publisher(publisher id)</li>
+        </ul>
+    </li>
+
+
+
+</ul>
+
+</body>
+</html>

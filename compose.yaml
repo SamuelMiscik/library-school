@@ -1,0 +1,21 @@
+# PostgreSQL database for the Library app, running in Docker.
+# Start:  docker compose up -d      (in this folder, -d = in background)
+# Stop:   docker compose down       (data stays in the volume)
+# Reset:  docker compose down -v    (-v = also delete the data)
+
+services:
+  postgres:
+    image: postgres:17                  # official PostgreSQL image, version 17
+    container_name: library-postgres    # name shown in Docker Desktop
+    environment:
+      POSTGRES_DB: library              # database created on first start
+      POSTGRES_USER: library            # user
+      POSTGRES_PASSWORD: library        # password (only for local development!)
+    ports:
+      - "5433:5432"                     # <your PC port>:<container port>
+                                        # 5433 because your local PostgreSQL 18 already uses 5432
+    volumes:
+      - library-data:/var/lib/postgresql/data   # keep the data when the container is removed
+
+volumes:
+  library-data:

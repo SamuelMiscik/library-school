@@ -1,0 +1,70 @@
+@startuml
+!pragma layout smetana
+hide circle
+skinparam linetype ortho
+
+title ER diagram – Library
+
+entity "library" as library {
+  * library_id : BIGINT <<PK>>
+  --
+  * name : VARCHAR
+  country : VARCHAR
+  city : VARCHAR
+  street : VARCHAR
+  zip : VARCHAR
+}
+
+entity "publisher" as publisher {
+  * publisher_id : BIGINT <<PK>>
+  --
+  * name : VARCHAR
+  country : VARCHAR
+  city : VARCHAR
+  street : VARCHAR
+  zip : VARCHAR
+}
+
+entity "author" as author {
+  * author_id : BIGINT <<PK>>
+  --
+  * first_name : VARCHAR
+  * last_name : VARCHAR
+  email : VARCHAR
+}
+
+entity "book" as book {
+  * isbn : VARCHAR(17) <<PK>>
+  --
+  * title : VARCHAR
+  publication_date : DATE
+  genre : VARCHAR
+  * publisher_id : BIGINT <<FK>>
+}
+
+entity "writes" as writes {
+  * isbn : VARCHAR(17) <<PK, FK>>
+  * author_id : BIGINT <<PK, FK>>
+}
+
+entity "contract" as contract {
+  * author_id : BIGINT <<PK, FK>>
+  * publisher_id : BIGINT <<PK, FK>>
+}
+
+entity "ownership" as ownership {
+  * id : BIGINT <<PK>>
+  --
+  * library_id : BIGINT <<FK, UNIQUE(library_id, book_id)>>
+  * book_id : VARCHAR(17) <<FK -> book.isbn, UNIQUE(library_id, book_id)>>
+  * copies : INT <<CHECK 1..5>>
+}
+
+publisher ||--o{ book
+book      ||--|{ writes
+author    ||--o{ writes
+author    ||--o{ contract
+publisher ||--o{ contract
+library   ||--o{ ownership
+book      ||--o{ ownership
+@enduml
