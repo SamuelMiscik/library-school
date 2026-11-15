@@ -1,4 +1,4 @@
-package cz.cvut.fel.sin.library.entities;
+package cz.cvut.fel.sin.library.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -7,9 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -46,8 +44,9 @@ public class Publisher {
     //   -> DB: NO column in "publisher" table for this, it's read from book.publisher_id
     // NO cascade: deleting a publisher must not delete its books
     //   (DB will refuse deleting a publisher that still has books -> FK error, which is what we want)
+    // Set (not List): a book can be in it only once, same as Book.authors / Author.publishers
     @OneToMany(mappedBy = "publisher")
-    private List<Book> books = new ArrayList<>();
+    private Set<Book> books = new HashSet<>();
 
     /** Authors that have a contract with this publisher. */
     // Publisher "0..*" -- "0..*" Author  (N:M, join table "contract")

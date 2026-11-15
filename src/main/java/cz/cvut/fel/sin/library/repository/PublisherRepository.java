@@ -1,6 +1,6 @@
 package cz.cvut.fel.sin.library.repository;
 
-import cz.cvut.fel.sin.library.entities.Publisher;
+import cz.cvut.fel.sin.library.model.Publisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

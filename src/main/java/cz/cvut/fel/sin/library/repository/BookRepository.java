@@ -1,8 +1,8 @@
 package cz.cvut.fel.sin.library.repository;
 
-import cz.cvut.fel.sin.library.entities.Book;
-import cz.cvut.fel.sin.library.entities.Genre;
-import cz.cvut.fel.sin.library.entities.Publisher;
+import cz.cvut.fel.sin.library.model.Book;
+import cz.cvut.fel.sin.library.model.Genre;
+import cz.cvut.fel.sin.library.model.Publisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

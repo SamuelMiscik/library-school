@@ -1,0 +1,13 @@
+# Liquibase master changelog = "table of contents" of all DB changes.
+# Spring Boot finds this file automatically (default path: classpath:db/changelog/db.changelog-master.yaml).
+#
+# Rules:
+#   - files run in THIS order, new files are always added at the END
+#   - never edit a file that already ran (Liquibase stores a checksum -> startup error)
+#   - every DB change (new table, new column, drop column...) = a new file in changes/
+#   - which changesets already ran is stored in the DB table DATABASECHANGELOG
+
+databaseChangeLog:
+  - include:
+      file: changes/001-initial-schema.sql
+      relativeToChangelogFile: true   # path is relative to this file

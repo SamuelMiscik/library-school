@@ -1,8 +1,8 @@
 package cz.cvut.fel.sin.library.repository;
 
-import cz.cvut.fel.sin.library.entities.Book;
-import cz.cvut.fel.sin.library.entities.Library;
-import cz.cvut.fel.sin.library.entities.Ownership;
+import cz.cvut.fel.sin.library.model.Book;
+import cz.cvut.fel.sin.library.model.Library;
+import cz.cvut.fel.sin.library.model.Ownership;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

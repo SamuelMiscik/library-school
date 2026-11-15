@@ -1,4 +1,4 @@
-package cz.cvut.fel.sin.library.entities;
+package cz.cvut.fel.sin.library.model;
 
 /**
  * Genre of a {@link Book}.
