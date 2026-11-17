@@ -1,5 +1,6 @@
 package cz.cvut.fel.sin.library.service;
 
+import cz.cvut.fel.sin.library.dto.OwnershipDto;
 import cz.cvut.fel.sin.library.dto.request.AddBookDto;
 import cz.cvut.fel.sin.library.model.Ownership;
 
@@ -22,7 +23,7 @@ public interface LibraryService {
      *
      * @param libraryId id of the library (from the URL)
      * @param dto       request body: ISBN of the book + number of copies (1-5, already validated by {@code @Valid})
-     * @return the saved ownership (the controller maps it to {@code OwnershipDto})
+     * @return the saved ownership as DTO (mapped inside the transaction)
      */
-    Ownership addBookToLibrary(Long libraryId, AddBookDto dto);
+    OwnershipDto addBookToLibrary(Long libraryId, AddBookDto dto);
 }

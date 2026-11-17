@@ -1,7 +1,7 @@
 package cz.cvut.fel.sin.library.service;
 
 import cz.cvut.fel.sin.library.dto.request.BookCreateDto;
-import cz.cvut.fel.sin.library.model.Book;
+import cz.cvut.fel.sin.library.dto.BookDto;
 
 /**
  * Business operations of a {@link cz.cvut.fel.sin.library.model.Publisher}.
@@ -24,7 +24,7 @@ public interface PublisherService {
      *
      * @param publisherId id of the publisher (from the URL)
      * @param dto         request body with the book data and author ids (already validated by {@code @Valid})
-     * @return the saved book (the controller maps it to {@code BookDto})
+     * @return the saved book as DTO (mapped inside the transaction, lazy relations are still loadable)
      */
-    public Book publishBook(Long publisherId, BookCreateDto dto);
+    public BookDto publishBook(Long publisherId, BookCreateDto dto);
 }

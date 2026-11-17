@@ -1,5 +1,7 @@
 package cz.cvut.fel.sin.library.service;
 
+import cz.cvut.fel.sin.library.dto.AuthorDto;
+import cz.cvut.fel.sin.library.dto.DtoMapper;
 import cz.cvut.fel.sin.library.exception.ConflictException;
 import cz.cvut.fel.sin.library.exception.NotFoundException;
 import cz.cvut.fel.sin.library.model.Author;
@@ -26,17 +28,23 @@ public class AuthorServiceImp implements AuthorService {
     /** DAO for publisher rows (injected by Spring). */
     private final PublisherRepository publisherRepository;
 
+    /** Entity -> DTO (way out). */
+    private final DtoMapper dtoMapper;
+
     /**
      * Constructor injection: Spring creates the repositories and passes them in
      * (one constructor -> no {@code @Autowired} needed).
      *
      * @param authorRepository author DAO
      * @param publisherRepository publisher DAO
+     * @param dtoMapper entity -> DTO mapper
      */
     public AuthorServiceImp(AuthorRepository authorRepository,
-                            PublisherRepository publisherRepository) {
+                            PublisherRepository publisherRepository,
+                            DtoMapper dtoMapper) {
         this.authorRepository = authorRepository;
         this.publisherRepository = publisherRepository;
+        this.dtoMapper = dtoMapper;
     }
 
     /**
@@ -44,7 +52,7 @@ public class AuthorServiceImp implements AuthorService {
      */
     @Override
     @Transactional // all or nothing: any RuntimeException -> rollback, nothing is written to contract
-    public Author signContract(Long authorId, Long publisherId) {
+    public AuthorDto signContract(Long authorId, Long publisherId) {
         log.trace("signContract(authorId={}, publisherId={})", authorId, publisherId);
 
         Author author = authorRepository.findById(authorId)
@@ -70,6 +78,6 @@ public class AuthorServiceImp implements AuthorService {
         author.addPublisher(publisher);          // both sides in Java; owning side -> INSERT INTO contract
         Author saved = authorRepository.save(author); // returns the managed (saved) entity; INSERT runs at flush/commit
         log.info("Contract signed: author {} <-> publisher {}", authorId, publisherId);
-        return saved;
+        return dtoMapper.toDto(saved); // map INSIDE the transaction (open-in-view is off)
     }
 }

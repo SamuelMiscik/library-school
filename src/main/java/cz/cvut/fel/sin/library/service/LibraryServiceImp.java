@@ -1,6 +1,8 @@
 package cz.cvut.fel.sin.library.service;
 
 import cz.cvut.fel.sin.library.dto.request.AddBookDto;
+import cz.cvut.fel.sin.library.dto.DtoMapper;
+import cz.cvut.fel.sin.library.dto.OwnershipDto;
 import cz.cvut.fel.sin.library.exception.ConflictException;
 import cz.cvut.fel.sin.library.exception.NotFoundException;
 import cz.cvut.fel.sin.library.model.Book;
@@ -32,6 +34,9 @@ public class LibraryServiceImp implements LibraryService {
     /** DAO for ownership rows (injected by Spring). */
     private final OwnershipRepository ownershipRepository;
 
+    /** Entity -> DTO (way out). */
+    private final DtoMapper dtoMapper;
+
     /**
      * Constructor injection: Spring creates the repositories and passes them in
      * (one constructor -> no {@code @Autowired} needed).
@@ -39,13 +44,16 @@ public class LibraryServiceImp implements LibraryService {
      * @param libraryRepository library DAO
      * @param bookRepository book DAO
      * @param ownershipRepository ownership DAO
+     * @param dtoMapper entity -> DTO mapper
      */
     public LibraryServiceImp(LibraryRepository libraryRepository,
                              BookRepository bookRepository,
-                             OwnershipRepository ownershipRepository) {
+                             OwnershipRepository ownershipRepository,
+                             DtoMapper dtoMapper) {
         this.libraryRepository = libraryRepository;
         this.bookRepository = bookRepository;
         this.ownershipRepository = ownershipRepository;
+        this.dtoMapper = dtoMapper;
     }
 
     /**
@@ -53,7 +61,7 @@ public class LibraryServiceImp implements LibraryService {
      */
     @Override
     @Transactional // all or nothing: any RuntimeException -> rollback, no row in ownership
-    public Ownership addBookToLibrary(Long libraryId, AddBookDto dto) {
+    public OwnershipDto addBookToLibrary(Long libraryId, AddBookDto dto) {
         log.trace("addBookToLibrary(libraryId={}, isbn={}, copies={})", libraryId, dto.isbn(), dto.copies());
 
         Library library = libraryRepository.findById(libraryId)
@@ -79,6 +87,6 @@ public class LibraryServiceImp implements LibraryService {
         Ownership ownership = new Ownership(library, book, dto.copies()); // links it into library + book (Java)
         Ownership saved = ownershipRepository.save(ownership);           // INSERT INTO ownership at flush/commit
         log.info("Library {} now owns {} copies of book {}", libraryId, dto.copies(), dto.isbn());
-        return saved;
+        return dtoMapper.toDto(saved); // map INSIDE the transaction (open-in-view is off)
     }
 }

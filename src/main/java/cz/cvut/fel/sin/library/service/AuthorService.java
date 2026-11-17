@@ -1,5 +1,6 @@
 package cz.cvut.fel.sin.library.service;
 
+import cz.cvut.fel.sin.library.dto.AuthorDto;
 import cz.cvut.fel.sin.library.model.Author;
 
 /**
@@ -21,9 +22,9 @@ public interface AuthorService {
      *
      * @param authorId    id of the author (from the URL)
      * @param publisherId id of the publisher (from {@code ContractCreateDto})
-     * @return the updated author (the controller maps it to {@code AuthorDto})
+     * @return the updated author as DTO (mapped inside the transaction, lazy relations are still loadable)
      */
-    public Author signContract(Long authorId, Long publisherId);
+    public AuthorDto signContract(Long authorId, Long publisherId);
 
 
 }

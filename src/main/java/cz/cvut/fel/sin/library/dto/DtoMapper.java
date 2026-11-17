@@ -5,23 +5,33 @@ import cz.cvut.fel.sin.library.dto.request.BookCreateDto;
 import cz.cvut.fel.sin.library.dto.request.LibraryCreateDto;
 import cz.cvut.fel.sin.library.dto.request.PublisherCreateDto;
 import cz.cvut.fel.sin.library.model.*;
-import org.springframework.stereotype.Component;
-
-import java.util.stream.Collectors;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 
 /**
- * Converts entities to DTOs (way OUT) and request DTOs to entities (way IN).
+ * Converts entities (BO) to DTOs (way OUT) and request DTOs to entities (way IN).
  * <p>
- * Hand-written version of what MapStruct would generate. It only copies plain data:
- * it never calls a repository, so relations (publisher, authors, library, book) are
- * NOT set by {@code toEntity} methods; the service loads them from the DB and sets them.
+ * MapStruct generates the implementation ({@code DtoMapperImpl}) at COMPILE time
+ * (see {@code target/generated-sources/annotations}). At runtime it is an ordinary class
+ * with getters / constructors, no reflection.
+ * <ul>
+ *     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ *   <li>fields with the same name are copied automatically</li>
+ *   <li>{@code @Mapping} only where names differ or a relation becomes an ID</li>
+ *   <li>{@code ignore = true}: the service fills it in (needs the DB), or the DB generates it</li>
+ *   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * </ul>
+ * It never calls a repository: relations in {@code toEntity} are set by the service.
  * <p>
  * Response methods read lazy relations (e.g. {@code book.getAuthors()}), so call them
- * while the Hibernate session is still open (inside the service transaction, or in the
- * controller with Spring's default open-in-view).
+ * while the Hibernate session is open (inside the service, or in the controller with open-in-view).
  */
-@Component // Spring creates ONE instance and injects it where needed (like a service)
-public class DtoMapper {
+@Mapper(
+        componentModel = "spring",                    // generated class is a Spring bean -> can be injected
+        unmappedTargetPolicy = ReportingPolicy.ERROR  // a target field nobody fills -> COMPILE error (safety)
+)
+public interface DtoMapper {
 
     // ---------------- entity -> DTO (response) ----------------
 
@@ -31,16 +41,9 @@ public class DtoMapper {
      * @param author the entity
      * @return the DTO, relations as IDs
      */
-    public AuthorDto toDto(Author author) {
-        return new AuthorDto(
-                author.getId(),
-                author.getFirstName(),
-                author.getLastName(),
-                author.getEmail(),
-                author.getPublishers().stream().map(Publisher::getId).collect(Collectors.toSet()),
-                author.getBooks().stream().map(Book::getIsbn).collect(Collectors.toSet())
-        );
-    }
+    @Mapping(target = "publisherIds", source = "publishers") // Set<Publisher> -> Set<Long> via publisherId()
+    @Mapping(target = "bookIsbns", source = "books")         // Set<Book> -> Set<String> via bookIsbn()
+    AuthorDto toDto(Author author);
 
     /**
      * Converts a book to its DTO.
@@ -48,16 +51,9 @@ public class DtoMapper {
      * @param book the entity
      * @return the DTO, publisher and authors as IDs
      */
-    public BookDto toDto(Book book) {
-        return new BookDto(
-                book.getIsbn(),
-                book.getTitle(),
-                book.getPublicationDate(),
-                book.getGenre(),
-                book.getPublisher() == null ? null : book.getPublisher().getId(),
-                book.getAuthors().stream().map(Author::getId).collect(Collectors.toSet())
-        );
-    }
+    @Mapping(target = "publisherId", source = "publisher.id") // book.getPublisher().getId() (null-safe)
+    @Mapping(target = "authorIds", source = "authors")        // Set<Author> -> Set<Long> via authorId()
+    BookDto toDto(Book book);
 
     /**
      * Converts a publisher to its DTO.
@@ -65,15 +61,9 @@ public class DtoMapper {
      * @param publisher the entity
      * @return the DTO, authors and books as IDs
      */
-    public PublisherDto toDto(Publisher publisher) {
-        return new PublisherDto(
-                publisher.getId(),
-                publisher.getName(),
-                toDto(publisher.getAddress()),
-                publisher.getAuthors().stream().map(Author::getId).collect(Collectors.toSet()),
-                publisher.getBooks().stream().map(Book::getIsbn).collect(Collectors.toSet())
-        );
-    }
+    @Mapping(target = "authorIds", source = "authors")
+    @Mapping(target = "bookIsbns", source = "books")
+    PublisherDto toDto(Publisher publisher); // address -> AddressDto via toDto(Address)
 
     /**
      * Converts a library to its DTO, including its ownerships.
@@ -81,14 +71,7 @@ public class DtoMapper {
      * @param library the entity
      * @return the DTO
      */
-    public LibraryDto toDto(Library library) {
-        return new LibraryDto(
-                library.getId(),
-                library.getName(),
-                toDto(library.getAddress()),
-                library.getOwnerships().stream().map(this::toDto).toList()
-        );
-    }
+    LibraryDto toDto(Library library); // ownerships -> List<OwnershipDto> via toDto(Ownership)
 
     /**
      * Converts an ownership to its DTO.
@@ -96,25 +79,17 @@ public class DtoMapper {
      * @param ownership the entity
      * @return the DTO, library and book as IDs
      */
-    public OwnershipDto toDto(Ownership ownership) {
-        return new OwnershipDto(
-                ownership.getId(),
-                ownership.getLibrary().getId(),
-                ownership.getBook().getIsbn(),
-                ownership.getCopies()
-        );
-    }
+    @Mapping(target = "libraryId", source = "library.id")
+    @Mapping(target = "bookIsbn", source = "book.isbn")
+    OwnershipDto toDto(Ownership ownership);
 
     /**
-     * Converts an embedded address to its DTO.
+     * Converts an embedded address to its DTO (all names match).
      *
      * @param address the address, can be null
      * @return the DTO, or null if there is no address
      */
-    public AddressDto toDto(Address address) {
-        if (address == null) return null;
-        return new AddressDto(address.street(), address.city(), address.zip(), address.country());
-    }
+    AddressDto toDto(Address address);
 
     // ---------------- request DTO -> entity (way IN) ----------------
 
@@ -122,15 +97,12 @@ public class DtoMapper {
      * Creates a new (unsaved) author from the request.
      *
      * @param dto the request body
-     * @return new entity without id (the DB generates it on save)
+     * @return new entity without id and relations
      */
-    public Author toEntity(AuthorCreateDto dto) {
-        Author author = new Author();
-        author.setFirstName(dto.firstName());
-        author.setLastName(dto.lastName());
-        author.setEmail(dto.email());
-        return author;
-    }
+    @Mapping(target = "id", ignore = true)         // DB generates it
+    @Mapping(target = "publishers", ignore = true) // contracts are signed later (signContract)
+    @Mapping(target = "books", ignore = true)      // books are published later (publishBook)
+    Author toEntity(AuthorCreateDto dto);
 
     /**
      * Creates a new (unsaved) book from the request, only the plain fields.
@@ -140,40 +112,31 @@ public class DtoMapper {
      * @param dto the request body
      * @return new entity without publisher and authors
      */
-    public Book toEntity(BookCreateDto dto) {
-        Book book = new Book();
-        book.setIsbn(dto.isbn());
-        book.setTitle(dto.title());
-        book.setPublicationDate(dto.publicationDate());
-        book.setGenre(dto.genre());
-        return book;
-    }
+    @Mapping(target = "publisher", ignore = true)  // service: book.setPublisher(publisher)
+    @Mapping(target = "authors", ignore = true)    // service: book.addAuthor(author)
+    @Mapping(target = "ownerships", ignore = true) // libraries add it later (addBookToLibrary)
+    Book toEntity(BookCreateDto dto);
 
     /**
      * Creates a new (unsaved) publisher from the request.
      *
      * @param dto the request body
-     * @return new entity without id
+     * @return new entity without id and relations
      */
-    public Publisher toEntity(PublisherCreateDto dto) {
-        Publisher publisher = new Publisher();
-        publisher.setName(dto.name());
-        publisher.setAddress(toEntity(dto.address()));
-        return publisher;
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "books", ignore = true)
+    @Mapping(target = "authors", ignore = true)
+    Publisher toEntity(PublisherCreateDto dto);
 
     /**
      * Creates a new (unsaved) library from the request.
      *
      * @param dto the request body
-     * @return new entity without id
+     * @return new entity without id and ownerships
      */
-    public Library toEntity(LibraryCreateDto dto) {
-        Library library = new Library();
-        library.setName(dto.name());
-        library.setAddress(toEntity(dto.address()));
-        return library;
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "ownerships", ignore = true)
+    Library toEntity(LibraryCreateDto dto);
 
     /**
      * Converts an address DTO to the embedded address.
@@ -181,8 +144,32 @@ public class DtoMapper {
      * @param dto the address DTO, can be null
      * @return the address, or null if none was sent
      */
-    public Address toEntity(AddressDto dto) {
-        if (dto == null) return null;
-        return new Address(dto.street(), dto.city(), dto.zip(), dto.country());
+    Address toEntity(AddressDto dto);
+
+    // ---------------- helpers: entity -> its ID ----------------
+    // MapStruct picks them by type wherever it must turn e.g. Publisher -> Long (also inside Sets)
+
+    /**
+     * @param publisher the publisher
+     * @return its id
+     */
+    default Long publisherId(Publisher publisher) {
+        return publisher.getId();
+    }
+
+    /**
+     * @param author the author
+     * @return its id
+     */
+    default Long authorId(Author author) {
+        return author.getId();
+    }
+
+    /**
+     * @param book the book
+     * @return its ISBN
+     */
+    default String bookIsbn(Book book) {
+        return book.getIsbn();
     }
 }

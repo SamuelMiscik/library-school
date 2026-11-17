@@ -1,5 +1,6 @@
 package cz.cvut.fel.sin.library.service;
 
+import cz.cvut.fel.sin.library.dto.BookDto;
 import cz.cvut.fel.sin.library.dto.DtoMapper;
 import cz.cvut.fel.sin.library.dto.request.BookCreateDto;
 import cz.cvut.fel.sin.library.exception.ConflictException;
@@ -36,7 +37,7 @@ public class PublisherServiceImp implements PublisherService {
     /** DAO for author rows (injected by Spring). */
     private final AuthorRepository authorRepository;
 
-    /** Converts the request DTO to a new Book entity (plain fields only). */
+    /** Request DTO -> new Book entity (way in), Book -> BookDto (way out). */
     private final DtoMapper dtoMapper;
 
     /**
@@ -63,7 +64,7 @@ public class PublisherServiceImp implements PublisherService {
      */
     @Override
     @Transactional // all or nothing: any RuntimeException -> rollback, no row in book / writes
-    public Book publishBook(Long publisherId, BookCreateDto dto) {
+    public BookDto publishBook(Long publisherId, BookCreateDto dto) {
         log.trace("publishBook(publisherId={}, isbn={}, authorIds={})", publisherId, dto.isbn(), dto.authorIds());
 
         Publisher publisher = publisherRepository.findById(publisherId)
@@ -105,6 +106,6 @@ public class PublisherServiceImp implements PublisherService {
 
         Book saved = bookRepository.save(book);  // INSERT INTO book + writes at flush/commit
         log.info("Publisher {} published book {} with {} authors", publisherId, dto.isbn(), authors.size());
-        return saved;
+        return dtoMapper.toDto(saved);          // map INSIDE the transaction (open-in-view is off)
     }
 }
