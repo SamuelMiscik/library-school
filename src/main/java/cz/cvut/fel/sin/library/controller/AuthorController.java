@@ -1,5 +1,6 @@
 package cz.cvut.fel.sin.library.controller;
 
+import cz.cvut.fel.sin.library.controller.interceptors.MockResponse;
 import cz.cvut.fel.sin.library.dto.AuthorDto;
 import cz.cvut.fel.sin.library.dto.request.ContractCreateDto;
 import cz.cvut.fel.sin.library.service.AuthorService;
@@ -52,5 +53,27 @@ public class AuthorController {
             @PathVariable Long authorId,                          // Spring: {authorId} from the URL
             @Valid @RequestBody ContractCreateDto dto) {          // Spring: JSON body -> record, validated (400)
         return authorService.signContract(authorId, dto.publisherId());
+    }
+
+    /**
+     * Returns one author. <b>Mocked</b>: answered by
+     * {@link cz.cvut.fel.sin.library.controller.interceptors.MockResponseInterceptor} with static JSON,
+     * the method body never runs.
+     *
+     * @param authorId id of the author (URL), ignored while mocked
+     * @return the author
+     */
+    @GetMapping("/{authorId}") // Spring: GET /authors/{authorId}
+    @MockResponse(body = """
+            {"id":1,"firstName":"Karel","lastName":"Čapek","email":"karel.capek@example.com",
+             "publisherIds":[1],"bookIsbns":["978-80-7335-001-1"]}
+            """) // Mock: static body returned instead of calling this method
+    @Operation(summary = "Get an author (mocked)",
+            description = "Returns static data until the real implementation exists.") // Swagger: endpoint description
+    @ApiResponse(responseCode = "200", description = "Author (static mock data)")      // Swagger: documents this response
+    public AuthorDto getAuthor(
+            @Parameter(description = "Author id", example = "1") // Swagger: describes the path parameter
+            @PathVariable Long authorId) {                        // Spring: {authorId} from the URL
+        throw new UnsupportedOperationException("Mocked by @MockResponse, not implemented yet"); // if anyone deletes the annotatipns, exception will show up
     }
 }

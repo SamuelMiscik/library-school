@@ -11,19 +11,16 @@ import cz.cvut.fel.sin.library.model.Ownership;
 import cz.cvut.fel.sin.library.repository.LibraryRepository;
 import cz.cvut.fel.sin.library.repository.BookRepository;
 import cz.cvut.fel.sin.library.repository.OwnershipRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link LibraryService}.
  */
+@Slf4j // Lombok: generates "private static final Logger log" for this class
 @Service // Spring component: created once, injected wherever LibraryService is needed
 public class LibraryServiceImp implements LibraryService {
-
-    /** Logger of this class (the class name is printed in every log line). */
-    private static final Logger log = LoggerFactory.getLogger(LibraryServiceImp.class);
 
     /** DAO for library rows (injected by Spring). */
     private final LibraryRepository libraryRepository;

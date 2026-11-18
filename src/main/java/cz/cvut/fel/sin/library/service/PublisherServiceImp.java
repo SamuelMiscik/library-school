@@ -11,8 +11,7 @@ import cz.cvut.fel.sin.library.model.Publisher;
 import cz.cvut.fel.sin.library.repository.PublisherRepository;
 import cz.cvut.fel.sin.library.repository.BookRepository;
 import cz.cvut.fel.sin.library.repository.AuthorRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +21,9 @@ import java.util.Set;
 /**
  * Implementation of {@link PublisherService}.
  */
+@Slf4j // Lombok: generates "private static final Logger log" for this class
 @Service // Spring component: created once, injected wherever PublisherService is needed
 public class PublisherServiceImp implements PublisherService {
-
-    /** Logger of this class (the class name is printed in every log line). */
-    private static final Logger log = LoggerFactory.getLogger(PublisherServiceImp.class);
 
     /** DAO for publisher rows (injected by Spring). */
     private final PublisherRepository publisherRepository;

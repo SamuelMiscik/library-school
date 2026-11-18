@@ -8,19 +8,16 @@ import cz.cvut.fel.sin.library.model.Author;
 import cz.cvut.fel.sin.library.model.Publisher;
 import cz.cvut.fel.sin.library.repository.AuthorRepository;
 import cz.cvut.fel.sin.library.repository.PublisherRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of {@link AuthorService}.
  */
+@Slf4j // Lombok: generates "private static final Logger log" for this class
 @Service // Spring component: created once, injected wherever AuthorService is needed
 public class AuthorServiceImp implements AuthorService {
-
-    /** Logger of this class (the class name is printed in every log line). */
-    private static final Logger log = LoggerFactory.getLogger(AuthorServiceImp.class);
 
     /** DAO for author rows (injected by Spring). */
     private final AuthorRepository authorRepository;

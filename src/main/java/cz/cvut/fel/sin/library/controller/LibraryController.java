@@ -1,5 +1,7 @@
 package cz.cvut.fel.sin.library.controller;
 
+import cz.cvut.fel.sin.library.controller.interceptors.MockResponse;
+import cz.cvut.fel.sin.library.dto.LibraryDto;
 import cz.cvut.fel.sin.library.dto.OwnershipDto;
 import cz.cvut.fel.sin.library.dto.request.AddBookDto;
 import cz.cvut.fel.sin.library.service.LibraryService;
@@ -50,5 +52,28 @@ public class LibraryController {
             @PathVariable Long libraryId,                          // Spring: {libraryId} from the URL
             @Valid @RequestBody AddBookDto dto) {                  // Spring: JSON body -> record, validated (400)
         return libraryService.addBookToLibrary(libraryId, dto);
+    }
+
+    /**
+     * Returns one library with the books it owns. <b>Mocked</b>: answered by
+     * {@link cz.cvut.fel.sin.library.controller.interceptors.MockResponseInterceptor} with static JSON,
+     * the method body never runs.
+     *
+     * @param libraryId id of the library (URL), ignored while mocked
+     * @return the library
+     */
+    @GetMapping("/{libraryId}") // Spring: GET /libraries/{libraryId}
+    @MockResponse(body = """
+            {"id":1,"name":"Městská knihovna Praha",
+             "address":{"street":"Mariánské nám. 1","city":"Praha","zip":"11000","country":"CZ"},
+             "ownerships":[{"id":1,"libraryId":1,"bookIsbn":"978-80-7335-001-1","copies":3}]}
+            """) // Mock: static body returned instead of calling this method
+    @Operation(summary = "Get a library (mocked)",
+            description = "Returns static data until the real implementation exists.") // Swagger: endpoint description
+    @ApiResponse(responseCode = "200", description = "Library (static mock data)")     // Swagger: documents this response
+    public LibraryDto getLibrary(
+            @Parameter(description = "Library id", example = "1") // Swagger: describes the path parameter
+            @PathVariable Long libraryId) {                        // Spring: {libraryId} from the URL
+        throw new UnsupportedOperationException("Mocked by @MockResponse, not implemented yet"); // if anyone deletes the annotatipns, exception will show up
     }
 }
